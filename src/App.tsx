@@ -1,15 +1,25 @@
-import { useState, ChangeEvent } from "react"
+import { useState, ChangeEvent } from "react";
 
 function App(): JSX.Element {
-  const [term, setTerm] = useState('')
+  const [term, setTerm] = useState<string>('');
 
-  const onInputChnage = (e: ChangeEvent<HTMLInputElement>) => {
-    setTerm(e.target.value)
+const getSearchOptions =async (value: string) => {
+  const apiKey = import.meta.env.VITE_REACT_APP_API_KEY;
+  console.log(apiKey)
+  const response = await fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${term}&limit=5&appid=${apiKey}`);
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
   }
+}
 
-  // http://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid={API key}
+  const onInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim()
+    setTerm(value);
 
-
+    if (value === '') return
+    
+    getSearchOptions(value)
+  };
 
   return (
     <main className="flex justify-center items-center bg-gradient-to-br from-sky-300 via-rose-400 h-[100vh] w-full">
@@ -21,14 +31,14 @@ function App(): JSX.Element {
           Enter below a place you want to know the weather of and select an option from the dropdown.
         </p>
         <div className="mt-10 md:mt-4">
-          <input onChange={onInputChnage} type="text" value={term} className="mt-6 px-2 py-1 rounded-l-lg border-2 border-white" />
+          <input onChange={onInputChange} type="text" value={term} className="mt-6 px-2 py-1 rounded-l-lg border-2 border-white" />
           <button className="rounded-r-lg border-2 border-zinc-100 hover:border-zinc-300 hover:text-zinc-500 text-zinc-100 px-2 py-1 cursor-pointer"> 
             Search
           </button>
         </div>
       </section>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
