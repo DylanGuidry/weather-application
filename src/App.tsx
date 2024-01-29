@@ -3,22 +3,29 @@ import { useState, ChangeEvent } from "react";
 function App(): JSX.Element {
   const [term, setTerm] = useState<string>('');
 
-const getSearchOptions =async (value: string) => {
-  const apiKey = import.meta.env.VITE_REACT_APP_API_KEY;
-  console.log(apiKey)
-  const response = await fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${term}&limit=5&appid=${apiKey}`);
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-}
-
-  const onInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.trim()
+  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
     setTerm(value);
 
-    if (value === '') return
-    
-    getSearchOptions(value)
+    if (value === '') return;
+
+    const apiKey = import.meta.env.VITE_REACT_APP_API_KEY;
+
+    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${value}&limit=5&appid=${apiKey}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('API Response:', data);
+        // Handle the API response data as needed
+      })
+      .catch(error => {
+        console.error('API Error:', error.message);
+        // Handle the error, e.g., show an error message to the user
+      });
   };
 
   return (
