@@ -1,49 +1,83 @@
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
+import { optionType } from "./tpyes";
+import Search from "./components/Search";
 
 function App(): JSX.Element {
-  const [term, setTerm] = useState<string>('');
+  const [term, setTerm] = useState<string>("");
+  const [options, setOptions] = useState<[]>([]);
+  const [city, setCity] = useState<optionType | null>(null);
+  const [forecast, setForecast] = useState<forecastType | null>(null);
 
   const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.trim();
     setTerm(value);
 
-    if (value === '') return;
+    if (value === "") return;
 
     const apiKey = import.meta.env.VITE_REACT_APP_API_KEY;
 
-    fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${value}&limit=5&appid=${apiKey}`)
-      .then(response => {
+    fetch(
+      `http://api.openweathermap.org/geo/1.0/direct?q=${value}&limit=5&appid=${apiKey}`
+    )
+      .then((response) => {
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error("Network response was not ok");
         }
         return response.json();
       })
-      .then(data => {
-        console.log('API Response:', data);
-        // Handle the API response data as needed
+      .then((data) => {
+        setOptions(data);
       })
-      .catch(error => {
-        console.error('API Error:', error.message);
+      .catch((error) => {
+        console.error("API Error:", error.message);
         // Handle the error, e.g., show an error message to the user
       });
   };
 
+  const getForecast = (city: optionType) => {
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${
+        city.lon
+      }&units=metric&appid=${import.meta.env.VITE_REACT_APP_API_KEY}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => setForecast(data));
+  };
+
+  const onSubmit = () => {
+    if (!city) return;
+    getForecast(city);
+  };
+
+  const onOptionSelect = (option: optionType) => {
+    setCity(option);
+  };
+
+  useEffect(() => {
+    if (city) {
+      setTerm(city.name);
+      setOptions([]);
+    }
+  }, []);
+
   return (
     <main className="flex justify-center items-center bg-gradient-to-br from-sky-300 via-rose-400 h-[100vh] w-full">
-      <section className="w-full md:max-w-[500px] p-4 flex flex-col text-center items-center justify-center md:px-10 lg:p-24 h-full lg:h-[500px] text-zinc-700 bg-white bg-opacity-20 backdrop-blur-lg drop-shadow-lg rounded">
-        <h1 className="text-4xl font-thin ">
-          Weather <span className="font-black">Forecast</span>
-        </h1>
-        <p className="text-small mt-2">
-          Enter below a place you want to know the weather of and select an option from the dropdown.
-        </p>
-        <div className="mt-10 md:mt-4">
-          <input onChange={onInputChange} type="text" value={term} className="mt-6 px-2 py-1 rounded-l-lg border-2 border-white" />
-          <button className="rounded-r-lg border-2 border-zinc-100 hover:border-zinc-300 hover:text-zinc-500 text-zinc-100 px-2 py-1 cursor-pointer"> 
-            Search
-          </button>
-        </div>
-      </section>
+      {forecast ? (
+        "we have a forecast"
+      ) : (
+        <Search
+          term={term}
+          options={options}
+          onInputChange={onInputChange}
+          onOptionSelect={onOptionSelect}
+          onSubmit={onSubmit}
+        />
+      )}{" "}
     </main>
   );
 }
